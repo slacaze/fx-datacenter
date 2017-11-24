@@ -1,0 +1,11 @@
+{
+    "test": {
+        "suites": {
+            "all": "fx.datacenter.test",
+            "unittest": "fx.datacenter.test.unittest"
+        },
+        "root": "test"
+    },
+    "parent_package": "fx",
+    "short_name": "datacenter"
+}
