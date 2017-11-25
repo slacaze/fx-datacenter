@@ -1,4 +1,6 @@
-classdef( Abstract ) Base < handle
+classdef( Abstract ) Base < ...
+        handle & ...
+        matlab.mixin.Heterogeneous
     
     properties( GetAccess = public, SetAccess = immutable )
         Name char
@@ -33,6 +35,14 @@ classdef( Abstract ) Base < handle
     methods( Abstract, Access = protected )
         
         values = getValues( this )
+        
+    end
+    
+    methods( Sealed )
+        
+        function varargout = eq( varargin )
+            [varargout{1:nargout}] = eq@handle( varargin{:} );
+        end
         
     end
     

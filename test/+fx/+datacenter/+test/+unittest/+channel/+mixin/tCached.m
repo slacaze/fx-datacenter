@@ -1,44 +1,28 @@
-classdef tCached < matlab.mock.TestCase
-    
-    properties
-        CacheMock
-        CacheBehavior
-    end
-    
-    methods( TestMethodSetup )
-        
-        function createCachedMock( this )
-            [this.CacheMock, this.CacheBehavior] = this.createMock( ...
-                ?fx.datacenter.channel.mixin.Cached, ...
-                'ConstructorInputs', {'myChannel', 'myUnit'}, ...
-                'Strict', true );
-        end
-        
-    end
+classdef tCached < fx.datacenter.test.WithMockedCachedChannels
     
     methods( Test )
         
         function testExtractValueIfStale( this )
             this.assignOutputsWhen( ...
-                this.CacheBehavior.getStaleness.withExactInputs, ...
+                this.FirstCachedBehavior.getStaleness.withExactInputs, ...
                 true );
             this.assignOutputsWhen( ...
-                this.CacheBehavior.extractValues.withExactInputs, ...
+                this.FirstCachedBehavior.extractValues.withExactInputs, ...
                 [1;2;3;4;5] );
-            values = this.CacheMock.Values;
-            this.verifyCalled( this.CacheBehavior.extractValues.withExactInputs );
+            values = this.FirstCachedMock.Values;
+            this.verifyCalled( this.FirstCachedBehavior.extractValues.withExactInputs );
             this.verifyEqual( values, [1;2;3;4;5] );
         end
         
         function testDoesNotExtractValueIfNotStale( this )
             this.assignOutputsWhen( ...
-                this.CacheBehavior.getStaleness.withExactInputs, ...
+                this.FirstCachedBehavior.getStaleness.withExactInputs, ...
                 false );
             this.assignOutputsWhen( ...
-                this.CacheBehavior.extractValues.withExactInputs, ...
+                this.FirstCachedBehavior.extractValues.withExactInputs, ...
                 [1;2;3;4;5] );
-            values = this.CacheMock.Values;
-            this.verifyNotCalled( this.CacheBehavior.extractValues.withAnyInputs );
+            values = this.FirstCachedMock.Values;
+            this.verifyNotCalled( this.FirstCachedBehavior.extractValues.withAnyInputs );
             this.verifyEqual( values, double.empty( 0, 1 ) );
         end
         

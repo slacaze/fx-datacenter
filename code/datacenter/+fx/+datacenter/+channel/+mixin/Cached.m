@@ -1,7 +1,7 @@
 classdef( Abstract ) Cached < fx.datacenter.channel.mixin.Base
     
-    properties( GetAccess = protected, SetAccess = private, Dependent )
-        Staleness(1,1) logical
+    properties( GetAccess = public, SetAccess = private, Dependent )
+        Stale(1,1) logical
     end
     
     properties( GetAccess = protected, SetAccess = private )
@@ -14,7 +14,7 @@ classdef( Abstract ) Cached < fx.datacenter.channel.mixin.Base
     
     methods
         
-        function staleness = get.Staleness( this )
+        function staleness = get.Stale( this )
             staleness = this.getStaleness();
         end
         
@@ -31,7 +31,7 @@ classdef( Abstract ) Cached < fx.datacenter.channel.mixin.Base
     methods( Access = protected )
         
         function values = getValues( this )
-            if this.Staleness
+            if this.Stale
                 this.CachedValues = this.extractValues();
                 this.CachedStamp = now();
             end
