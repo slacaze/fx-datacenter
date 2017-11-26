@@ -5,7 +5,7 @@ classdef Manager < handle
     end
     
     properties( GetAccess = private, SetAccess = private )
-        Channels_(1,:) fx.datacenter.channel.mixin.Base = fx.datacenter.channel.mixin.Base.empty( 1, 0 )
+        Channels_(1,:) fx.datacenter.channel.mixin.Cached = fx.datacenter.channel.mixin.Cached.empty( 1, 0 )
         ChannelsDestroyedListeners(1,:) event.listener = event.listener.empty( 1, 0 )
     end
     
@@ -15,6 +15,11 @@ classdef Manager < handle
             names = {this.Channels_.Name};
         end
         
+    end
+    
+    events( ListenAccess = public, NotifyAccess = private )
+        ChannelListChanged
+        ChannelValueChanged
     end
     
     methods( Access = public )
@@ -28,7 +33,7 @@ classdef Manager < handle
         
         function addChannels( this, channels )
             validateattributes( channels, ...
-                {'fx.datacenter.channel.mixin.Base'}, {'row'} );
+                {'fx.datacenter.channel.mixin.Cached'}, {'row'} );
             % Names must be unique
             validIndex = ~ismember( {channels.Name}, this.ChannelNames );
             ignoredChannels = channels(~validIndex);
@@ -49,12 +54,13 @@ classdef Manager < handle
                         channelsToAdd(channelIndex), 'ObjectBeingDestroyed', ...
                         @(~,~) this.removeChannels( channelsToAdd(channelIndex) ) );
                 end
+                this.notify( 'ChannelListChanged' );
             end
         end
         
         function removeChannels( this, channels )
             validateattributes( channels, ...
-                {'fx.datacenter.channel.mixin.Base'}, {'row'} );
+                {'fx.datacenter.channel.mixin.Cached'}, {'row'} );
             % Can only remove channels that exists
             [exist, position] = ismember( channels, this.Channels_ );
             ignoredChannels = channels(~exist);
@@ -67,6 +73,7 @@ classdef Manager < handle
             if any( exist )
                 this.Channels_(position(exist)) = [];
                 this.ChannelsDestroyedListeners(position(exist)) = [];
+                this.notify( 'ChannelListChanged' );
             end
         end
         

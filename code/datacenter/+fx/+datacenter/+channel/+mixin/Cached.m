@@ -1,6 +1,14 @@
-classdef( Abstract ) Cached < fx.datacenter.channel.mixin.Base
+classdef( Abstract ) Cached < ...
+        handle & ...
+        matlab.mixin.Heterogeneous
+    
+    properties( GetAccess = public, SetAccess = immutable )
+        Name char
+        Units char
+    end
     
     properties( GetAccess = public, SetAccess = private, Dependent )
+        Values(:,1) double
         Stale(1,1) logical
     end
     
@@ -14,6 +22,10 @@ classdef( Abstract ) Cached < fx.datacenter.channel.mixin.Base
     
     methods
         
+        function values = get.Values( this )
+            values = this.getValues();
+        end
+        
         function staleness = get.Stale( this )
             staleness = this.getStaleness();
         end
@@ -23,7 +35,12 @@ classdef( Abstract ) Cached < fx.datacenter.channel.mixin.Base
     methods( Access = public )
         
         function this = Cached( name, units )
-            this@fx.datacenter.channel.mixin.Base( name, units );
+            validateattributes( name, ...
+                {'char'}, {'scalartext'} );
+            validateattributes( units, ...
+                {'char'}, {'scalartext'} );
+            this.Name = name;
+            this.Units = units;
         end
         
     end
@@ -44,6 +61,14 @@ classdef( Abstract ) Cached < fx.datacenter.channel.mixin.Base
         
         values = extractValues( this )
         staleness = getStaleness( this )
+        
+    end
+    
+    methods( Sealed )
+        
+        function varargout = eq( varargin )
+            [varargout{1:nargout}] = eq@handle( varargin{:} );
+        end
         
     end
     

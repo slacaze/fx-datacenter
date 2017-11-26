@@ -1,4 +1,6 @@
-classdef tManager < fx.datacenter.test.WithMockedCachedChannels
+classdef tManager < ...
+        fx.datacenter.test.WithMockedCachedChannels & ...
+        fx.datacenter.test.WithEventTest
     
     methods( Test )
         
@@ -69,6 +71,31 @@ classdef tManager < fx.datacenter.test.WithMockedCachedChannels
             delete( channel );
             this.verifyEmpty( manager.ChannelNames );
         end
+        
+        function testNotifiedWhenChannelListChanged( this )
+            manager = fx.datacenter.Manager();
+            this.listen( manager, 'ChannelListChanged' );
+            this.resetEventProperties();
+            manager.addChannels( this.FirstCachedMock );
+            this.verifyNotified();
+            this.resetEventProperties();
+            manager.addChannels( this.SecondCachedMock );
+            this.verifyNotified();
+            this.resetEventProperties();
+            manager.removeChannels( [ ...
+                this.FirstCachedMock, ...
+                this.SecondCachedMock, ...
+                ] );
+            this.verifyNotified();
+        end
+        
+%         function testNotfiedWhenChannelValuesChanged( this )
+%             manager = fx.datacenter.Manager();
+%             this.listen( manager, 'ChannelListChanged' );
+%             manager.addChannels( this.FirstCachedMock );
+%             this.verifyNotNotified();
+%             values = this.FirstCached.Values;
+%         end
         
     end
     
