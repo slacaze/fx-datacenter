@@ -6,6 +6,7 @@ classdef Manager < handle
     
     properties( GetAccess = private, SetAccess = private )
         Channels_(1,:) fx.datacenter.channel.mixin.Base = fx.datacenter.channel.mixin.Base.empty( 1, 0 )
+        ChannelsDestroyedListeners(1,:) event.listener = event.listener.empty( 1, 0 )
     end
     
     methods
@@ -43,6 +44,11 @@ classdef Manager < handle
                     this.Channels_, ...
                     channelsToAdd, ...
                     ];
+                for channelIndex = 1:numel( channelsToAdd )
+                    this.ChannelsDestroyedListeners(end+1) = event.listener( ...
+                        channelsToAdd(channelIndex), 'ObjectBeingDestroyed', ...
+                        @(~,~) this.removeChannels( channelsToAdd(channelIndex) ) );
+                end
             end
         end
         
@@ -60,6 +66,7 @@ classdef Manager < handle
             end
             if any( exist )
                 this.Channels_(position(exist)) = [];
+                this.ChannelsDestroyedListeners(position(exist)) = [];
             end
         end
         

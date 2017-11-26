@@ -60,6 +60,16 @@ classdef tManager < fx.datacenter.test.WithMockedCachedChannels
             this.verifyEqual( values, expectedValues );
         end
         
+        function testChannelIsRemovedOnDestroyed( this )
+            channel = fx.datacenter.channel.Static( ...
+                'x', 'm', [1;2;3;4;5] );
+            manager = fx.datacenter.Manager();
+            manager.addChannels( channel );
+            this.verifyEqual( manager.ChannelNames, {'x'} );
+            delete( channel );
+            this.verifyEmpty( manager.ChannelNames );
+        end
+        
     end
     
 end
