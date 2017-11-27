@@ -25,10 +25,6 @@ classdef Excel < fx.datacenter.channel.mixin.Cached
     
     methods( Access = protected )
         
-        function staleness = getStaleness( this )
-            staleness = isnan( this.CachedStamp );
-        end
-        
         function values = extractValues( this )
             values = xlsread( this.File, this.Sheet, this.Range );
         end

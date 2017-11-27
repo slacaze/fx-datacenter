@@ -43,14 +43,8 @@ classdef tManager < ...
                 this.SecondCachedMock, ...
                 ] );
             this.assignOutputsWhen( ...
-                this.FirstCachedBehavior.getStaleness.withExactInputs, ...
-                true );
-            this.assignOutputsWhen( ...
                 this.FirstCachedBehavior.extractValues.withExactInputs, ...
                 [1;2;3;4;5] );
-            this.assignOutputsWhen( ...
-                this.SecondCachedBehavior.getStaleness.withExactInputs, ...
-                true );
             this.assignOutputsWhen( ...
                 this.SecondCachedBehavior.extractValues.withExactInputs, ...
                 2 * [1;2;3;4;5] );
@@ -89,13 +83,47 @@ classdef tManager < ...
             this.verifyNotified();
         end
         
-%         function testNotfiedWhenChannelValuesChanged( this )
-%             manager = fx.datacenter.Manager();
-%             this.listen( manager, 'ChannelListChanged' );
-%             manager.addChannels( this.FirstCachedMock );
-%             this.verifyNotNotified();
-%             values = this.FirstCached.Values;
-%         end
+        function testNotfiedWhenChannelValuesChanged( this )
+            manager = fx.datacenter.Manager();
+            this.listen( manager, 'ChannelValuesChanged' );
+            manager.addChannels( this.FirstCachedMock );
+            this.verifyNotNotified();
+            this.assignOutputsWhen( ...
+                this.FirstCachedBehavior.extractValues.withExactInputs, ...
+                [1;2;3;4;5] );
+            values = this.FirstCachedMock.Values;
+            this.verifyNotNotified();
+            this.verifyEqual( values, [1;2;3;4;5] );
+            this.FirstCachedMock.Stale = true;
+            this.verifyNotified();
+        end
+        
+        function testNotifyWholeChain( this )
+            manager = fx.datacenter.Manager();
+            this.listen( manager, 'ChannelValuesChanged' );
+            channel = fx.datacenter.channel.Calculated( ...
+                'x2', 'm' );
+            manager.addChannels( channel );
+            manager.addChannels( this.FirstCachedMock );
+            channel.InputChannels = this.FirstCachedMock;
+            channel.FormulaString = 'x .^ 2';
+            this.assignOutputsWhen( ...
+                this.FirstCachedBehavior.extractValues.withExactInputs, ...
+                [1;2;3;4;5] );
+            values = channel.Values;
+            this.resetEventProperties();
+            this.verifyEqual( values, [1;2;3;4;5] .^ 2 );
+            this.assignOutputsWhen( ...
+                this.FirstCachedBehavior.extractValues.withExactInputs, ...
+                2 * [1;2;3;4;5] );
+            this.FirstCachedMock.Stale = true;
+            this.verifyNotified();
+            this.verifyEqual( this.NumberOfNotified, 2 );
+            this.verifyEqual( this.EventData{2}.ChannelNames, {'x'} );
+            this.verifyEqual( this.EventData{1}.ChannelNames, {'x2'} );
+            values = channel.Values;
+            this.verifyEqual( values, ( 2 * [1;2;3;4;5] ) .^ 2 );
+        end
         
     end
     

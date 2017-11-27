@@ -6,7 +6,8 @@ classdef Manager < handle
     
     properties( GetAccess = private, SetAccess = private )
         Channels_(1,:) fx.datacenter.channel.mixin.Cached = fx.datacenter.channel.mixin.Cached.empty( 1, 0 )
-        ChannelsDestroyedListeners(1,:) event.listener = event.listener.empty( 1, 0 )
+        ChannelDestroyedListeners(1,:) event.listener = event.listener.empty( 1, 0 )
+        ChannelValuesChangedListeners(1,:) event.listener = event.listener.empty( 1, 0 )
     end
     
     methods
@@ -19,12 +20,17 @@ classdef Manager < handle
     
     events( ListenAccess = public, NotifyAccess = private )
         ChannelListChanged
-        ChannelValueChanged
+        ChannelValuesChanged
     end
     
     methods( Access = public )
         
         function this = Manager()
+        end
+        
+        function delete( this )
+            delete( this.ChannelDestroyedListeners );
+            delete( this.ChannelValuesChangedListeners );
         end
         
     end
@@ -50,9 +56,12 @@ classdef Manager < handle
                     channelsToAdd, ...
                     ];
                 for channelIndex = 1:numel( channelsToAdd )
-                    this.ChannelsDestroyedListeners(end+1) = event.listener( ...
+                    this.ChannelDestroyedListeners(end+1) = event.listener( ...
                         channelsToAdd(channelIndex), 'ObjectBeingDestroyed', ...
                         @(~,~) this.removeChannels( channelsToAdd(channelIndex) ) );
+                    this.ChannelValuesChangedListeners(end+1) = event.listener( ...
+                        channelsToAdd(channelIndex), 'ChannelValueChanged', ...
+                        @this.onChannelValueChanged );
                 end
                 this.notify( 'ChannelListChanged' );
             end
@@ -72,7 +81,7 @@ classdef Manager < handle
             end
             if any( exist )
                 this.Channels_(position(exist)) = [];
-                this.ChannelsDestroyedListeners(position(exist)) = [];
+                this.ChannelDestroyedListeners(position(exist)) = [];
                 this.notify( 'ChannelListChanged' );
             end
         end
@@ -99,6 +108,15 @@ classdef Manager < handle
             values = table( ...
                 this.Channels_(position(exist)).Values, ...
                 'VariableNames', this.ChannelNames(position(exist)) );
+        end
+        
+    end
+    
+    methods( Access = private )
+        
+        function onChannelValueChanged( this, channel, ~ )
+            this.notify( 'ChannelValuesChanged', ...
+                fx.datacenter.event.ChannelList( channel ) );
         end
         
     end

@@ -9,7 +9,10 @@ classdef Calculated < fx.datacenter.channel.mixin.Cached
         InputChannels_(1,:) fx.datacenter.channel.mixin.Cached = fx.datacenter.channel.mixin.Cached.empty( 1, 0 )
         FormulaString_(1,:) char = '[]'
         FunctionHandle(1,1) function_handle = str2func( '@() []' )
-        LastModified_(1,1) double = NaN
+    end
+    
+    properties( GetAccess = private, SetAccess = private )
+        InputChangedListeners(1,:) event.listener = event.listener.empty( 1, 0 )
     end
     
     methods
@@ -28,11 +31,19 @@ classdef Calculated < fx.datacenter.channel.mixin.Cached
             end
             % Attempt to set
             oldChannels = this.InputChannels_;
+            oldListeners = this.InputChangedListeners;
             this.InputChannels_ = channels;
+            if isempty( channels )
+                this.InputChangedListeners = event.listener.empty( 1, 0 );
+            else
+                this.InputChangedListeners = event.listener( this.InputChannels_, ...
+                    'ChannelValueChanged', @this.onInputBecameStaled );
+            end
             try
                 this.updateFunctionHandle();
             catch
                 this.InputChannels_ = oldChannels;
+                this.InputChangedListeners = oldListeners;
             end
         end
         
@@ -62,14 +73,6 @@ classdef Calculated < fx.datacenter.channel.mixin.Cached
     
     methods( Access = protected )
         
-        function staleness = getStaleness( this )
-            staleness = ...
-                this.LastModified_ > this.CachedStamp || ...
-                isnan( this.LastModified_ ) || ...
-                isnan( this.CachedStamp ) || ...
-                ( ~isempty( this.InputChannels_ ) && any( [this.InputChannels_.Stale] ) );
-        end
-        
         function values = extractValues( this )
             values = this.FunctionHandle( this.InputChannels_.Values );
         end
@@ -83,7 +86,11 @@ classdef Calculated < fx.datacenter.channel.mixin.Cached
                 '@(%s) %s', ...
                 strjoin( {this.InputChannels_.Name}, ', ' ), ...
                 this.FormulaString_ ) );
-            this.LastModified_ = now();
+            this.Stale = true;
+        end
+        
+        function onInputBecameStaled( this, ~, ~ )
+            this.Stale = true;
         end
         
     end

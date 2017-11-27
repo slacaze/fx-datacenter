@@ -9,6 +9,9 @@ classdef( Abstract ) Cached < ...
     
     properties( GetAccess = public, SetAccess = private, Dependent )
         Values(:,1) double
+    end
+    
+    properties( GetAccess = public, SetAccess = public, Dependent )
         Stale(1,1) logical
     end
     
@@ -18,6 +21,11 @@ classdef( Abstract ) Cached < ...
     
     properties( GetAccess = private, SetAccess = private )
         CachedValues(:,1) double = double.empty( 0, 1 )
+        Stale_(1,1) logical = true
+    end
+    
+    events( ListenAccess = public, NotifyAccess = protected )
+        ChannelValueChanged
     end
     
     methods
@@ -27,7 +35,16 @@ classdef( Abstract ) Cached < ...
         end
         
         function staleness = get.Stale( this )
-            staleness = this.getStaleness();
+            staleness = this.Stale_;
+        end
+        
+        function set.Stale( this, staleness )
+            this.Stale_ = staleness;
+            if this.Stale_
+                % We only notify if we've becomed stale, which means the
+                % values might have changed
+                this.notifyChannelBecameStale();
+            end
         end
         
     end
@@ -51,6 +68,7 @@ classdef( Abstract ) Cached < ...
             if this.Stale
                 this.CachedValues = this.extractValues();
                 this.CachedStamp = now();
+                this.Stale_ = false;
             end
             values = this.CachedValues;
         end
@@ -60,7 +78,14 @@ classdef( Abstract ) Cached < ...
     methods( Abstract, Access = protected )
         
         values = extractValues( this )
-        staleness = getStaleness( this )
+        
+    end
+    
+    methods( Access = private )
+        
+        function notifyChannelBecameStale( this )
+            this.notify( 'ChannelValueChanged' );
+        end
         
     end
     

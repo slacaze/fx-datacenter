@@ -19,10 +19,6 @@ classdef Static < fx.datacenter.channel.mixin.Cached
     
     methods( Access = protected )
         
-        function staleness = getStaleness( this )
-            staleness = isnan( this.CachedStamp );
-        end
-        
         function values = extractValues( this )
             values = this.Values_;
         end
