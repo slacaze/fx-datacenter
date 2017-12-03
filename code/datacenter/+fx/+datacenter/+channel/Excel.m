@@ -26,7 +26,7 @@ classdef Excel < fx.datacenter.channel.mixin.Cached
     methods( Access = protected )
         
         function values = extractValues( this )
-            values = xlsread( this.File, this.Sheet, this.Range );
+            values = xlsread( this.File, this.Sheet, this.Range, 'basic' );
         end
         
     end
